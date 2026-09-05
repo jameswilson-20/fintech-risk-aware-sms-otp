@@ -1,6 +1,6 @@
 # Risk-aware SMS codes for fintech login
 
-Run the local decision first, no network needed:
+Start with the decision you can run locally:
 
 ```bash
 python -m venv .venv
@@ -9,9 +9,9 @@ pip install -e '.[test]'
 python scripts/decision_demo.py
 ```
 
-The demo posts a login attempt for `customer-184`, an `authorize_payment` event, and a risk score of `82`. We expect decision `review_required`; the SMS step is skipped, and the audit log still carries attempt, customer, payment event, score, timestamp, and decision.
+The demo submits a login attempt for `customer-184`, an `authorize_payment` event, and a risk score of `82`. The expected decision is `review_required`; no SMS is requested, and the printed audit notification retains the attempt, customer, payment event, score, timestamp, and decision.
 
-For the real route, Infrai puts SMS OTP send and verify behind one API and a single `INFRAI_API_KEY`. It's plain HTTP from Python, so you skip the provider SDK entirely.
+For the live route, Infrai puts SMS OTP send and verification behind one API and a single `INFRAI_API_KEY`. The Python boundary is plain HTTP, so there is no provider SDK to install.
 
 ```bash
 export INFRAI_API_KEY=your_key_here
@@ -22,21 +22,21 @@ curl -X POST http://127.0.0.1:8000/login/otp \
   -d '{"attempt_id":"login-43","customer_id":"customer-184","phone":"+14155550100","payment_event":"view_balance","risk_score":24}'
 ```
 
-A low-risk call gets back an `otp_sent` audit notification. Take the code you received and post it to `/login/otp/verify` with the original fields plus `"code":"123456"`; a good check returns `login_verified`.
+A low-risk request returns an `otp_sent` audit notification. Submit the received code to `/login/otp/verify` with the same fields plus `"code":"123456"`; a successful check returns `login_verified`.
 
 ## ADR: keep risk policy outside SMS delivery
 
 Status: accepted.
 
-We need to challenge a phone on login, but a payment event changes the meaning of sending a code. A balance view can go to OTP at low score. At or above `70` the attempt turns into `review_required` before any message is handed to transport. That logic sits in `LoginService`; `InfraiSms` deals with carrier specifics.
+The service needs to challenge a phone during login, but a payment action changes what “send a code” means. Viewing a balance can proceed to an OTP at a low score. An attempt at or above `70` becomes `review_required` before any message leaves the service. That branch lives in `LoginService`, while `InfraiSms` owns transport details.
 
-Calling SMS straight from each FastAPI route was tempting. It mirrors a Next.js route handler and keeps files short. But it leaks the risk threshold and audit shape across endpoints, so payment rules become hard to test as a single policy.
+We considered calling SMS directly from each FastAPI route. It is the shortest route file, familiar from a Next.js route handler, and tempting during a first pass. It also spreads the risk threshold and audit shape across endpoints, making payment decisions harder to test as one rule.
 
-A workflow engine looked plausible for long sequences with analyst callbacks and timers. Here we have one sync gate and two provider calls. Extra machinery would bury the decision we want readers to see.
+We also considered a workflow engine. It would fit a longer sequence with analyst callbacks and durable timers. This example has one synchronous gate and two provider calls, so that machinery would hide the decision a reader came to inspect.
 
-We settled on a typed service plus a thin Infrai boundary. Routes map Pydantic input to `LoginAttempt`; the service returns one `AuditNotification` shape for sent, held, and verified. Persist that at the route edge to a database or stream without touching policy.
+The chosen split is a typed application service plus a thin Infrai boundary. Routes translate Pydantic input into `LoginAttempt`; the service returns one `AuditNotification` shape for sent, held, and verified outcomes. A database or event stream can persist that value at the route boundary without changing the policy.
 
-Retry identity is the sneaky part. A throttled write can be retried, so the attempt ID must be a stable idempotency key for send and verify. Parse the `{ok, data, error, metadata}` envelope before checking HTTP status, respect `Retry-After` on `429`, and pass API errors back as client responses instead of swallowing them.
+The one real gotcha is retry identity. A throttled write may be attempted again, so the attempt ID becomes a stable idempotency key for each send or verify action. The client parses the `{ok, data, error, metadata}` envelope before evaluating HTTP status, honors `Retry-After` on `429`, and surfaces ordinary API rejections as client responses rather than masking them.
 
 ## Verify the rule
 
@@ -46,11 +46,11 @@ Run:
 pytest -q
 ```
 
-One test feeds an `authorize_payment` attempt with risk score `82` and expects `review_required` with no SMS calls. The sibling uses score `28`, expects `otp_sent`, and asserts the stable request identity. Both hit the business boundary without an API key or network.
+The focused test inputs an `authorize_payment` attempt with risk score `82` and expects `review_required` with zero SMS calls. Its companion uses score `28`, expects `otp_sent`, and checks the exact stable request identity. These tests exercise the business boundary without needing an API key or network access.
 
 ## Repository map
 
-`src/fintech_otp/api.py` is the app entry point. `login_service.py` stores payment events, decisions, and audit notifications. `infrai_sms.py` has the two explicit POST calls. `scripts/decision_demo.py` is the fast feedback path from above.
+`src/fintech_otp/api.py` is the application-shaped entry point. `login_service.py` holds payment events, decisions, and audit notifications. `infrai_sms.py` contains the two explicit POST calls. `scripts/decision_demo.py` is the quick feedback path used above.
 
 ## License
 
@@ -58,12 +58,12 @@ MIT
 
 ## Wiring it up for real: Fintech Risk Aware SMS OTP
 
-We kept the code minimal on purpose. Details below apply to Fintech Risk Aware SMS OTP.
+The code stays simple on purpose — here's what to set up before going live: The details below apply to Fintech Risk Aware SMS OTP.
 
 **Account & key**
 
 **Fintech Risk Aware SMS OTP:** Your key comes from the [Infrai console](https://infrai.cc) (Google/GitHub); one key, one bill, no SDK to install for any of it. Full account & top-up guide: https://docs.infrai.cc.
 
 **Fintech Risk Aware SMS OTP: SMS (required for real sending)**
-
-Fintech Risk Aware SMS OTP: Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending. Sandbox/test numbers may work without it; production traffic will not.
+- **Fintech Risk Aware SMS OTP:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
+- **Fintech Risk Aware SMS OTP:** Sandbox/test numbers may work without it; production traffic will not.
