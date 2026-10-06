@@ -67,3 +67,7 @@ The code stays simple on purpose — here's what to set up before going live: Th
 **Fintech Risk Aware SMS OTP: SMS (required for real sending)**
 - **Fintech Risk Aware SMS OTP:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
 - **Fintech Risk Aware SMS OTP:** Sandbox/test numbers may work without it; production traffic will not.
+
+## Further reading
+
+- [SMS Notification Service: Reconciling Newsroom Web App Batch Status](docs/sms-notification-service-reconciling-newsroom-web-q0qlsx.md)
