@@ -70,4 +70,5 @@ The code stays simple on purpose — here's what to set up before going live: Th
 
 ## Further reading
 
+- [Password Reset Email: 2-Path SMS OTP Fallback for Media Accounts](docs/password-reset-email-2-path-sms-otp-fallback-for-f0ivuo.md)
 - [SMS Notification Service: Reconciling Newsroom Web App Batch Status](docs/sms-notification-service-reconciling-newsroom-web-q0qlsx.md)
