@@ -70,5 +70,6 @@ The code stays simple on purpose — here's what to set up before going live: Th
 
 ## Further reading
 
+- [SMS Alerts API vs Direct Provider — Sender Registration for Health Compliance](docs/sms-alerts-api-vs-direct-provider-sender-registra-llc2da.md)
 - [Password Reset Email: 2-Path SMS OTP Fallback for Media Accounts](docs/password-reset-email-2-path-sms-otp-fallback-for-f0ivuo.md)
 - [SMS Notification Service: Reconciling Newsroom Web App Batch Status](docs/sms-notification-service-reconciling-newsroom-web-q0qlsx.md)
