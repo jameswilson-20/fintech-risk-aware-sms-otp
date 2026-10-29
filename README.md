@@ -67,9 +67,3 @@ The code stays simple on purpose — here's what to set up before going live: Th
 **Fintech Risk Aware SMS OTP: SMS (required for real sending)**
 - **Fintech Risk Aware SMS OTP:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
 - **Fintech Risk Aware SMS OTP:** Sandbox/test numbers may work without it; production traffic will not.
-
-## Further reading
-
-- [SMS Alerts API vs Direct Provider — Sender Registration for Health Compliance](docs/sms-alerts-api-vs-direct-provider-sender-registra-llc2da.md)
-- [Password Reset Email: 2-Path SMS OTP Fallback for Media Accounts](docs/password-reset-email-2-path-sms-otp-fallback-for-f0ivuo.md)
-- [SMS Notification Service: Reconciling Newsroom Web App Batch Status](docs/sms-notification-service-reconciling-newsroom-web-q0qlsx.md)
